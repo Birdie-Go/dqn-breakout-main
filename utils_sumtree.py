@@ -61,7 +61,7 @@ class SumTree(object):
                     parent_idx = cr_idx
 
         data_idx = leaf_idx - self.capacity + 1
-        return leaf_idx, self.tree[leaf_idx], *self.data[data_idx]
+        return leaf_idx, self.tree[leaf_idx], self.data[data_idx]
 
     @property
     def total_p(self):
