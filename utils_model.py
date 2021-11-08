@@ -11,7 +11,8 @@ class DQN(nn.Module):
         self.__conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2, bias=False)
         self.__conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1, bias=False)
         self.__fc1 = nn.Linear(64*7*7, 512)
-        self.__fc2 = nn.Linear(512, action_dim)
+        self.__value = nn.Linear(512, 1)
+        self.__advantage = nn.Linear(512, action_dim)
         self.__device = device
 
     def forward(self, x):
@@ -20,7 +21,10 @@ class DQN(nn.Module):
         x = F.relu(self.__conv2(x))
         x = F.relu(self.__conv3(x))
         x = F.relu(self.__fc1(x.view(x.size(0), -1)))
-        return self.__fc2(x)
+        value = F.relu(self.__value(x))
+        advan = F.relu(self.__advantage(x))
+        advAverage = torch.mean(advan, dim=1, keepdim=True)
+        return value + advan - advAverage
 
     @staticmethod
     def init_weights(module):
