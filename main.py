@@ -63,8 +63,7 @@ for step in progressive:
     state = env.make_state(obs_queue).to(device).float()
     action = agent.run(state, training)
     obs, reward, done = env.step(action)
-    obs_queue.append(obs)
-    p = agent.value_p(state, action, reward, obs)
+    p = 1 if not training else agent.value_p(env.make_folded_state(obs), action, reward)
     memory.push(p,env.make_folded_state(obs_queue), action, reward, done)
 
     if step % POLICY_UPDATE == 0 and training:
