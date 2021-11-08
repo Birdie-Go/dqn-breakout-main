@@ -64,7 +64,8 @@ for step in progressive:
     action = agent.run(state, training)
     obs, reward, done = env.step(action)
     obs_queue.append(obs)
-    memory.push(env.make_folded_state(obs_queue), action, reward, done)
+    p = agent.value_p(state, action, reward, obs)
+    memory.push(p,env.make_folded_state(obs_queue), action, reward, done)
 
     if step % POLICY_UPDATE == 0 and training:
         agent.learn(memory, BATCH_SIZE)
