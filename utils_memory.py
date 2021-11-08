@@ -65,7 +65,7 @@ class ReplayMemory(object):
             BatchDone,
     ]:
         pri_step = self.tree.total_p / batch_size
-        self.belta = np.min(1, self.belta + self.belta_increment_per_sampling)
+        self.belta = np.min([1, self.belta + self.belta_increment_per_sampling])
         min_p = self.tree.min_p / self.tree.total_p
         min_p = 0.0001 if min_p == 0 else min_p
         b_state = []
@@ -76,20 +76,20 @@ class ReplayMemory(object):
         ISweight = []
         for i in range(batch_size):
             st, ed = pri_step * i, pri_step * (i + 1)
-            v = torch.rand(st, ed, size=(1,))
+            v = np.random.uniform(st, ed)
             indec, p, (m_states, m_actions, m_rewards, m_dones) = self.tree.get_leaf(v)
 
-            b_state.append(m_states[:4])
-            b_next.append(m_states[1:])
-            b_action.append(m_actions)
-            b_reward.append(m_rewards)
-            b_done.append(m_dones)
+            b_state.append(m_states[0][:4])
+            b_next.append(m_states[0][1:])
+            b_action.append([m_actions])
+            b_reward.append([m_rewards])
+            b_done.append([m_dones])
             ISweight.append(np.power(p / min_p, self.belta))
-        b_state = torch.Tensor(b_state).to(self.__device)
-        b_next = torch.Tensor(b_next).to(self.__device)
-        b_action = torch.Tensor(b_action).to(self.__device)
-        b_reward = torch.Tensor(b_reward).to(self.__device)
-        b_done = torch.Tensor(b_done).to(self.__device)
+        b_state = torch.Tensor([item.detach().numpy() for item in b_state]).to(self.__device)
+        b_next = torch.Tensor([item.detach().numpy()for item in b_next]).to(self.__device)
+        b_action = torch.Tensor(b_action).to(self.__device).long()
+        b_reward = torch.Tensor(b_reward).to(self.__device).float()
+        b_done = torch.Tensor(b_done).to(self.__device).float()
         return b_state, b_action, b_reward, b_next, b_done
 
     def __len__(self) -> int:
