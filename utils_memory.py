@@ -84,13 +84,14 @@ class ReplayMemory(object):
             b_action.append([m_actions])
             b_reward.append([m_rewards])
             b_done.append([m_dones])
-            ISweight.append(np.power(p / min_p, self.belta))
-        b_state = torch.Tensor([item.detach().numpy() for item in b_state]).to(self.__device)
-        b_next = torch.Tensor([item.detach().numpy()for item in b_next]).to(self.__device)
+            ISweight.append([np.power(p / min_p, self.belta)])
+        b_state = torch.Tensor(np.array([item.detach().numpy() for item in b_state])).to(self.__device)
+        b_next = torch.Tensor(np.array([item.detach().numpy()for item in b_next])).to(self.__device)
         b_action = torch.Tensor(b_action).to(self.__device).long()
         b_reward = torch.Tensor(b_reward).to(self.__device).float()
         b_done = torch.Tensor(b_done).to(self.__device).float()
-        return b_state, b_action, b_reward, b_next, b_done
+        # ISweight = torch.Tensor(ISweight).to(self.__device).float()
+        return b_state, b_action, b_reward, b_next, b_done, ISweight
 
     def __len__(self) -> int:
         return self.__size
