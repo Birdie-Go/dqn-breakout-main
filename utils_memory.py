@@ -31,7 +31,7 @@ class ReplayMemory(object):
         self.tree = SumTree(capacity)
         self.belta = 0.4
         self.belta_increment_per_sampling = 0.001
-        # self.__size = 0
+        self.__size = 0
         # self.__pos = 0
         #
         # self.__m_states = torch.zeros(
@@ -55,7 +55,7 @@ class ReplayMemory(object):
         # self.__m_dones[self.__pos, 0] = done
         #
         # self.__pos = (self.__pos + 1) % self.__capacity
-        # self.__size = max(self.__size, self.__pos)
+        self.__size = max(self.__size, self.tree.data_pointer)
 
     def sample(self, batch_size: int) -> Tuple[
             BatchState,
@@ -77,14 +77,19 @@ class ReplayMemory(object):
         for i in range(batch_size):
             st, ed = pri_step * i, pri_step * (i + 1)
             v = torch.rand(st, ed, size=(1,))
-            indec, p, m_states, m_actions, m_rewards, m_dones = self.tree.get_leaf(v)
+            indec, p, (m_states, m_actions, m_rewards, m_dones) = self.tree.get_leaf(v)
 
-            b_state.append(m_states[:4].to(self.__device).float())
-            b_next.append(m_states[1:].to(self.__device).float())
-            b_action.append(m_actions.to(self.__device))
-            b_reward.append(m_rewards.to(self.__device).float())
-            b_done.append(m_dones.to(self.__device).float())
+            b_state.append(m_states[:4])
+            b_next.append(m_states[1:])
+            b_action.append(m_actions)
+            b_reward.append(m_rewards)
+            b_done.append(m_dones)
             ISweight.append(np.power(p / min_p, self.belta))
+        b_state = torch.Tensor(b_state).to(self.__device)
+        b_next = torch.Tensor(b_next).to(self.__device)
+        b_action = torch.Tensor(b_action).to(self.__device)
+        b_reward = torch.Tensor(b_reward).to(self.__device)
+        b_done = torch.Tensor(b_done).to(self.__device)
         return b_state, b_action, b_reward, b_next, b_done
 
     def __len__(self) -> int:
