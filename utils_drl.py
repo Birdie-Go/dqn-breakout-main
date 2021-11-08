@@ -3,6 +3,7 @@ from typing import (
 )
 
 import random
+import numpy as np
 
 import torch
 import torch.nn.functional as F
@@ -72,11 +73,11 @@ class Agent(object):
 
     def value_p(self, obs_q, action, reward) -> float:
         """calculate the Priority of the given transaction"""
-        state = obs_q[:4]
-        next_state = obs_q[1:]
-        action = torch.Tensor([action]).to(self.__device).long()
-        values = self.__policy(state.to(self.__device).float()).gather(1, action)
-        values_next = self.__target(next_state.to(self.__device).float()).max(1).values.detach()
+        state = torch.Tensor([obs_q[0][:4].detach().numpy()])
+        next_state = torch.Tensor([obs_q[0][1:].detach().numpy()])
+        action = torch.Tensor([[action]]).to(self.__device).long()
+        values = self.__policy(state.to(self.__device).float().float()).gather(1, action)
+        values_next = self.__target(next_state.to(self.__device).float().float()).max(1).values.detach()
         p = reward + values_next * self.__gamma - values
         return p
 
