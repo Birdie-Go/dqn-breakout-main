@@ -41,7 +41,7 @@ class Agent(object):
         self.__eps_final = eps_final
         self.__eps_decay = eps_decay
 
-        self.__eps = eps_start if restore is None else (eps_start + eps_final) / 2
+        self.__eps = eps_start if restore is None else eps_final
         self.__r = random.Random()
         self.__r.seed(seed)
 
@@ -50,6 +50,7 @@ class Agent(object):
         if restore is None:
             self.__policy.apply(DQN.init_weights)
         else:
+            print(f"load {restore}")
             self.__policy.load_state_dict(torch.load(restore))
         self.__target.load_state_dict(self.__policy.state_dict())
         self.__optimizer = optim.Adam(
