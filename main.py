@@ -13,7 +13,7 @@ from utils_memory import ReplayMemory
 GAMMA = 0.99
 GLOBAL_SEED = 0
 MEM_SIZE = 100_000
-RENDER = False
+RENDER = True
 SAVE_PREFIX = "./models"
 STACK_SIZE = 4
 
@@ -24,9 +24,9 @@ EPS_DECAY = 1000000
 BATCH_SIZE = 32
 POLICY_UPDATE = 4
 TARGET_UPDATE = 10_000
-WARM_STEPS = 10_000
+WARM_STEPS = 50_000
 MAX_STEPS = 50_000_00
-EVALUATE_FREQ = 10_000
+EVALUATE_FREQ = 100_000
 
 rand = random.Random()
 rand.seed(GLOBAL_SEED)
@@ -43,7 +43,7 @@ agent = Agent(
     EPS_START,
     EPS_END,
     EPS_DECAY,
-    # "./models/model_000"
+    "./models/model_000"
 )
 memory = ReplayMemory(STACK_SIZE + 1, MEM_SIZE, device)
 
