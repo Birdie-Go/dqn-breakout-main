@@ -21,8 +21,8 @@ class DQN(nn.Module):
         x = F.relu(self.__conv2(x))
         x = F.relu(self.__conv3(x))
         x = F.relu(self.__fc1(x.view(x.size(0), -1)))
-        value = F.relu(self.__value(x))
-        advan = F.relu(self.__advantage(x))
+        value = self.__value(x)
+        advan = self.__advantage(x)
         advAverage = torch.mean(advan, dim=1, keepdim=True)
         return value + advan - advAverage
 
