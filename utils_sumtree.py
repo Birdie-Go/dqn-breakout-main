@@ -59,7 +59,7 @@ class SumTree(object):
                         v -= self.tree[cl_idx]
                         parent_idx = cr_idx
             data_list.append(leaf_idx - self.capacity + 1)
-            p_list.append(self.tree[leaf_idx])
+            p_list.append(self.tree[leaf_idx] / self.total_p)
         return data_list, p_list
 
     @property

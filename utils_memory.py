@@ -79,7 +79,7 @@ class ReplayMemory(object):
         min_p = 0.0001 if min_p <= 0.0001 else min_p
         v = [np.random.uniform(i * pri_step, (i + 1) * pri_step) for i in range(batch_size)]
         indices, ISweight = self.tree.get_leaf(v)
-        ISweight = [[np.power(i / min_p, self.belta)] for i in ISweight]
+        ISweight = [[np.power(i / min_p, - self.belta)] for i in ISweight]
         b_state = self.__m_states[indices, :4].to(self.__device).float()
         b_next = self.__m_states[indices, 1:].to(self.__device).float()
         b_action = self.__m_actions[indices].to(self.__device)
