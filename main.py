@@ -13,7 +13,7 @@ from utils_memory import ReplayMemory
 GAMMA = 0.99
 GLOBAL_SEED = 0
 MEM_SIZE = 100_000
-RENDER = True
+RENDER = False
 SAVE_PREFIX = "./models"
 STACK_SIZE = 4
 
