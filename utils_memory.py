@@ -76,17 +76,10 @@ class ReplayMemory(object):
         pri_step = self.tree.total_p / batch_size
         self.belta = np.min([1, self.belta + self.belta_increment_per_sampling])
         min_p = self.tree.min_p / self.tree.total_p
-        if min_p != min_p:
-            print(f"sample nan detected!!! {self.tree.total_p}")
-            exit(-1)
-        min_p = 0.001 if min_p <= 0.001 else min_p
+        min_p = self.epsilon if min_p <= self.epsilon else min_p
         v = [np.random.uniform(i * pri_step, (i + 1) * pri_step) for i in range(batch_size)]
         indices, ISweight = self.tree.get_leaf(v)
-        ISweight = [[np.power(i / min_p, - self.belta)] for i in ISweight]
-        if min_p != min_p or min_p == 0 or min_p < 0.001:
-            print(f"ERROR When sqrt {min_p} {self.belta}")
-            print(repr(e))
-            exit(-1)
+        ISweight = [[np.power((i + self.epsilon) / min_p, - self.belta)] for i in ISweight]
         b_state = self.__m_states[indices, :4].to(self.__device).float()
         b_next = self.__m_states[indices, 1:].to(self.__device).float()
         b_action = self.__m_actions[indices].to(self.__device)
@@ -97,11 +90,6 @@ class ReplayMemory(object):
 
     def batch_update(self, tree_idx, abs_errors):
         abs_errors += self.epsilon  # convert to abs and avoid 0
-        for i in abs_errors:
-            if i != i:
-                print(f"!!!{i} detected")
-                print("abs_errors")
-                exit(-1)
         clipped_errors = np.minimum(abs_errors, self.abs_err_upper)
         ps = np.power(clipped_errors, self.alpha)
         for ti, p in zip(tree_idx, ps):
