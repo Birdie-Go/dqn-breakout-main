@@ -41,7 +41,7 @@ class Agent(object):
         self.__eps_final = eps_final
         self.__eps_decay = eps_decay
 
-        self.__eps = eps_start
+        self.__eps = eps_start if restore is None else (eps_start + eps_final) / 2
         self.__r = random.Random()
         self.__r.seed(seed)
 
@@ -71,41 +71,25 @@ class Agent(object):
                 return self.__policy(state).max(1).indices.item()
         return self.__r.randint(0, self.__action_dim - 1)
 
-    def value_p(self, obs_q, action, reward) -> float:
-        """calculate the Priority of the given transaction"""
-        state = torch.Tensor(np.array([obs_q[0][:4].detach().numpy()]))
-        next_state = torch.Tensor(np.array([obs_q[0][1:].detach().numpy()]))
-        action = torch.Tensor([[action]]).to(self.__device).long()
-        values = self.__policy(state.to(self.__device).float()).gather(1, action)
-        values_next = self.__target(next_state.to(self.__device).float()).max(1).values.detach()
-        p = reward + values_next * self.__gamma - values
-        return p
-
-
     def learn(self, memory: ReplayMemory, batch_size: int) -> float:
         """learn trains the value network via TD-learning."""
-        state_batch, action_batch, reward_batch, next_batch, done_batch, ISweight = \
+        indec, state_batch, action_batch, reward_batch, next_batch, done_batch, ISweight = \
             memory.sample(batch_size)
 
         values = self.__policy(state_batch.float()).gather(1, action_batch)
         values_next = self.__target(next_batch.float()).max(1).values.detach()
         expected = (self.__gamma * values_next.unsqueeze(1)) * \
             (1. - done_batch) + reward_batch
-        for i in range(len(ISweight)):
-            ISweight[i] = ISweight[i] if np.abs(values[i].cpu().detach() - expected[i].cpu().detach()) >= 1 else np.sqrt(ISweight[i])
-        ISweight = np.array(ISweight)
-        ISweight = torch.Tensor(ISweight).to(self.__device)
-        values = values * ISweight
-        expected = expected * ISweight
-        loss = F.smooth_l1_loss(values, expected)
+        loss = F.mse_loss(values, expected, reduction="none")
 
         self.__optimizer.zero_grad()
-        loss.backward()
+
+        loss.backward(ISweight)
         for param in self.__policy.parameters():
             param.grad.data.clamp_(-1, 1)
         self.__optimizer.step()
 
-        return loss.item()
+        memory.batch_update(indec, loss.cpu().detach().numpy())
 
     def sync(self) -> None:
         """sync synchronizes the weights from the policy network to the target

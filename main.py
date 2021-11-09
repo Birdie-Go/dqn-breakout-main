@@ -25,13 +25,12 @@ BATCH_SIZE = 32
 POLICY_UPDATE = 4
 TARGET_UPDATE = 10_000
 WARM_STEPS = 50_00
-MAX_STEPS = 50_000_000
-EVALUATE_FREQ = 100_000
+MAX_STEPS = 50_000_00
+EVALUATE_FREQ = 10_000
 
 rand = random.Random()
 rand.seed(GLOBAL_SEED)
 new_seed = lambda: rand.randint(0, 1000_000)
-os.mkdir(SAVE_PREFIX)
 
 torch.manual_seed(new_seed())
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -44,6 +43,7 @@ agent = Agent(
     EPS_START,
     EPS_END,
     EPS_DECAY,
+    # "./models/model_000"
 )
 memory = ReplayMemory(STACK_SIZE + 1, MEM_SIZE, device)
 
@@ -64,9 +64,7 @@ for step in progressive:
     action = agent.run(state, training)
     obs, reward, done = env.step(action)
     obs_queue.append(obs)
-    p = 1 if not training else agent.value_p(env.make_folded_state(obs_queue), action, reward)
-    # p = 1 
-    memory.push(p,env.make_folded_state(obs_queue), action, reward, done)
+    memory.push(env.make_folded_state(obs_queue), action, reward, done)
 
     if step % POLICY_UPDATE == 0 and training:
         agent.learn(memory, BATCH_SIZE)

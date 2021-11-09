@@ -63,9 +63,22 @@ class SumTree(object):
         data_idx = leaf_idx - self.capacity + 1
         return leaf_idx, self.tree[leaf_idx], self.data[data_idx]
 
+    def update(self, tree_idx, p):
+        change = p - self.tree[tree_idx]
+        self.tree[tree_idx] = p
+        # then propagate the change through tree
+        while tree_idx != 0:    # this method is faster than the recursive loop in the reference code
+            tree_idx = (tree_idx - 1) // 2
+            self.tree[tree_idx] += change
+
     @property
     def total_p(self):
         return self.tree[0]  # the root
+
     @property
     def min_p(self):
         return np.min(self.tree[-self.capacity:])  # the root
+
+    @property
+    def max_p(self):
+        return np.max(self.tree[-self.capacity:])  # the root
