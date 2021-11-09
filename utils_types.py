@@ -6,6 +6,8 @@ from typing import (
     Any,
 )
 
+# Tensor with shape (None, 1)
+BatchIndex = Any
 # Tensor with shape (None, 4, 84, 84)
 BatchState = Any
 # Tensor with shape (None, 1)
@@ -16,6 +18,8 @@ BatchReward = Any
 BatchNext = Any
 # Tensor with shape (None, 1)
 BatchDone = Any
+# Tensor with shape (None, 1)
+BatchPriority = Any
 # NDArray with shape (210, 160, 3)
 GymImg = Any
 # NDArray with shape (84, 84, 1)

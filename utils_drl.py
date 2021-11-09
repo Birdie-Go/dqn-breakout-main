@@ -89,7 +89,7 @@ class Agent(object):
             param.grad.data.clamp_(-1, 1)
         self.__optimizer.step()
 
-        memory.batch_update(indec, (loss*ISweight).cpu().detach().numpy())
+        memory.batch_update(indec, np.abs((expected - values).cpu().detach().numpy()))
 
     def sync(self) -> None:
         """sync synchronizes the weights from the policy network to the target
