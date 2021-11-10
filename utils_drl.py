@@ -81,11 +81,11 @@ class Agent(object):
         values_next = self.__target(next_batch.float()).max(1).values.detach()
         expected = (self.__gamma * values_next.unsqueeze(1)) * \
             (1. - done_batch) + reward_batch
-        loss = F.smooth_l1_loss(values, expected, reduction="none")
+        loss = F.smooth_l1_loss(values, expected)
 
         self.__optimizer.zero_grad()
 
-        loss.backward(ISweight)
+        loss.backward()
         for param in self.__policy.parameters():
             param.grad.data.clamp_(-1, 1)
         self.__optimizer.step()
