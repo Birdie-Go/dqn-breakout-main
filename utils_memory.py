@@ -39,10 +39,10 @@ class ReplayMemory(object):
         self.abs_err_upper = 1.0
         self.__pos = 0
         self.__m_states = torch.zeros(
-            (capacity, channels, 84, 84), dtype=torch.uint8)
-        self.__m_actions = torch.zeros((capacity, 1), dtype=torch.long)
-        self.__m_rewards = torch.zeros((capacity, 1), dtype=torch.int8)
-        self.__m_dones = torch.zeros((capacity, 1), dtype=torch.bool)
+            (capacity, channels, 84, 84), dtype=torch.uint8).to(self.__device)
+        self.__m_actions = torch.zeros((capacity, 1), dtype=torch.long).to(self.__device)
+        self.__m_rewards = torch.zeros((capacity, 1), dtype=torch.int8).to(self.__device)
+        self.__m_dones = torch.zeros((capacity, 1), dtype=torch.bool).to(self.__device)
 
     def push(
             self,
@@ -51,7 +51,7 @@ class ReplayMemory(object):
             reward: int,
             done: bool,
     ) -> None:
-        max_p = np.max(self.tree.max_p)
+        max_p = self.tree.max_p
         if max_p == 0:
             max_p = self.abs_err_upper
         self.tree.add(max_p)
@@ -62,7 +62,7 @@ class ReplayMemory(object):
        
         self.__pos = (self.__pos + 1) 
         self.__size = max(self.__size, self.__pos)
-        self.__pos = (self.__pos + 1) % self.__capacity
+        self.__pos = self.__pos % self.__capacity
 
     def sample(self, batch_size: int) -> Tuple[
             BatchIndex,
