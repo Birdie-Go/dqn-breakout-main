@@ -43,7 +43,7 @@ agent = Agent(
     EPS_START,
     EPS_END,
     EPS_DECAY,
-    "./models/model_000"
+    # "./models/sss"
 )
 memory = ReplayMemory(STACK_SIZE + 1, MEM_SIZE, device)
 
