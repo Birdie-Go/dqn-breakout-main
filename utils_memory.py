@@ -38,6 +38,7 @@ class ReplayMemory(object):
         self.alpha = 0.6
         self.abs_err_upper = 1.0
         self.__pos = 0
+        # store in memory of GPU for better efficience
         self.__m_states = torch.zeros(
             (capacity, channels, 84, 84), dtype=torch.uint8).to(self.__device)
         self.__m_actions = torch.zeros((capacity, 1), dtype=torch.long).to(self.__device)
@@ -51,6 +52,7 @@ class ReplayMemory(object):
             reward: int,
             done: bool,
     ) -> None:
+        '''add new screen in memory'''
         max_p = self.tree.max_p
         if max_p == 0:
             max_p = self.abs_err_upper
@@ -73,11 +75,13 @@ class ReplayMemory(object):
             BatchDone,
             BatchPriority
     ]:
+        '''Memory replay'''
         pri_step = self.tree.total_p / batch_size
         self.belta = np.min([1, self.belta + self.belta_increment_per_sampling])
         min_p = self.tree.min_p / self.tree.total_p
         min_p = self.epsilon if min_p <= self.epsilon else min_p
         v = [np.random.uniform(i * pri_step, (i + 1) * pri_step) for i in range(batch_size)]
+        # get the index of sampling memory
         indices, ISweight = self.tree.get_leaf(v)
         ISweight = [[np.power((i + self.epsilon) / min_p, - self.belta)] for i in ISweight]
         b_state = self.__m_states[indices, :4].to(self.__device).float()
@@ -89,6 +93,7 @@ class ReplayMemory(object):
         return indices, b_state, b_action, b_reward, b_next, b_done, ISweight
 
     def batch_update(self, tree_idx, abs_errors):
+        '''Update priority of memory'''
         abs_errors += self.epsilon  # convert to abs and avoid 0
         clipped_errors = np.minimum(abs_errors, self.abs_err_upper)
         ps = np.power(clipped_errors, self.alpha)

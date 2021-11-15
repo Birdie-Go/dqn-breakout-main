@@ -45,6 +45,7 @@ class Agent(object):
         self.__r = random.Random()
         self.__r.seed(seed)
 
+        # double network
         self.__policy = DQN(action_dim, device).to(device)
         self.__target = DQN(action_dim, device).to(device)
         if restore is None:
@@ -67,6 +68,7 @@ class Agent(object):
                 (self.__eps_start - self.__eps_final) / self.__eps_decay
             self.__eps = max(self.__eps, self.__eps_final)
 
+        # When testing, not use epsilon policy
         if testing or self.__r.random() > self.__eps:
             with torch.no_grad():
                 return self.__policy(state).max(1).indices.item()
@@ -77,19 +79,25 @@ class Agent(object):
         indec, state_batch, action_batch, reward_batch, next_batch, done_batch, ISweight = \
             memory.sample(batch_size)
 
+        # evaluate the current state
         values = self.__policy(state_batch.float()).gather(1, action_batch)
+        # evaluate the next state
         values_next = self.__target(next_batch.float()).max(1).values.detach()
+        # get the expected value of the current state
         expected = (self.__gamma * values_next.unsqueeze(1)) * \
             (1. - done_batch) + reward_batch
+        # calculate the loss
         loss = F.smooth_l1_loss(values, expected)
 
         self.__optimizer.zero_grad()
 
+        # Backpropagation
         loss.backward()
         for param in self.__policy.parameters():
             param.grad.data.clamp_(-1, 1)
         self.__optimizer.step()
 
+        # update priority
         memory.batch_update(indec, torch.abs(expected - values).cpu().detach().numpy())
 
         return loss.item()
