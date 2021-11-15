@@ -1,4 +1,7 @@
 DQN for Breakout
+
+Here is our modified project of DQN for breakout.
+
 ================
 
 This project is modified from https://github.com/wetliu/dqn_pytorch based on my
