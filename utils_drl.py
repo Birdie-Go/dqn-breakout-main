@@ -16,7 +16,6 @@ from utils_types import (
 
 from utils_memory import ReplayMemory
 from utils_model import DQN
-from main import PRIORITY
 
 
 class Agent(object):
