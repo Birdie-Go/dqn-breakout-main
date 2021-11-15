@@ -7,13 +7,14 @@ import torch
 
 from utils_drl import Agent
 from utils_env import MyEnv
-from utils_memory import ReplayMemory
+from utils_memory import ReplayMemory, PriorityReplayMemory
 
 # Discount Rate
 GAMMA = 0.99
 GLOBAL_SEED = 0
 MEM_SIZE = 100_000
 RENDER = False
+PRIORITY = True
 SAVE_PREFIX = "./models"
 # The number of Input Frame
 STACK_SIZE = 4
@@ -57,7 +58,10 @@ agent = Agent(
     # "./models/sss"
 )
 # Memory replay
-memory = ReplayMemory(STACK_SIZE + 1, MEM_SIZE, device)
+if PRIORITY:
+    memory = PriorityReplayMemory(STACK_SIZE + 1, MEM_SIZE, device)
+else:
+    memory = ReplayMemory(STACK_SIZE + 1, MEM_SIZE, device)
 
 #### Training ####
 # Use for sampling screen

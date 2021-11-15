@@ -16,6 +16,7 @@ from utils_types import (
 
 from utils_memory import ReplayMemory
 from utils_model import DQN
+from main import PRIORITY
 
 
 class Agent(object):
@@ -74,10 +75,15 @@ class Agent(object):
                 return self.__policy(state).max(1).indices.item()
         return self.__r.randint(0, self.__action_dim - 1)
 
-    def learn(self, memory: ReplayMemory, batch_size: int) -> float:
+    def learn(self, memory, batch_size: int) -> None:
         """learn trains the value network via TD-learning."""
-        indec, state_batch, action_batch, reward_batch, next_batch, done_batch, ISweight = \
-            memory.sample(batch_size)
+
+        if PRIORITY:
+            indec, state_batch, action_batch, reward_batch, next_batch, done_batch, ISweight = \
+                memory.sample(batch_size)
+        else:
+            state_batch, action_batch, reward_batch, next_batch, done_batch= \
+                memory.sample(batch_size)
 
         # evaluate the current state
         values = self.__policy(state_batch.float()).gather(1, action_batch)
@@ -87,20 +93,26 @@ class Agent(object):
         expected = (self.__gamma * values_next.unsqueeze(1)) * \
             (1. - done_batch) + reward_batch
         # calculate the loss
-        loss = F.smooth_l1_loss(values, expected)
+        if PRIORITY:
+            loss = F.smooth_l1_loss(values, expected, reduction="none")
+        else:
+            loss = F.smooth_l1_loss(values, expected)
 
         self.__optimizer.zero_grad()
 
         # Backpropagation
-        loss.backward()
+        if PRIORITY:
+            loss.backward(ISweight)
+        else:
+            loss.backward()
+
         for param in self.__policy.parameters():
             param.grad.data.clamp_(-1, 1)
         self.__optimizer.step()
 
         # update priority
-        memory.batch_update(indec, torch.abs(expected - values).cpu().detach().numpy())
-
-        return loss.item()
+        if PRIORITY:
+            memory.batch_update(indec, torch.abs(expected - values).cpu().detach().numpy())
 
     def sync(self) -> None:
         """sync synchronizes the weights from the policy network to the target
